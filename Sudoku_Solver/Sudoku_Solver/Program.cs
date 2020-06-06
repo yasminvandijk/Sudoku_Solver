@@ -7,7 +7,8 @@ namespace Sudoku_Solver
         static void Main(string[] args)
         {
             while (true) {
-                Console.WriteLine("Enter path to input file:");
+                // get filepath from input and read it's contents
+                Console.WriteLine("Enter path to text file:");
 
                 string filepath = Console.ReadLine();
 
@@ -15,6 +16,7 @@ namespace Sudoku_Solver
 
                 if (lines != null)
                 {
+                    // print contents from file
                     Console.WriteLine("\nContents read from file:\n");
                     
                     foreach (string line in lines)
@@ -23,6 +25,14 @@ namespace Sudoku_Solver
                     }
 
                     Console.WriteLine();
+
+                    // parse text to sudoku grid
+                    int[,] numbers = SudokuParser.ParseText(lines);
+
+                    if (numbers != null)
+                    {
+                        Console.WriteLine("succesfully parsed sudoku");
+                    }
                 }
             }
         }
