@@ -31,7 +31,12 @@ namespace Sudoku_Solver
 
                     if (numbers != null)
                     {
-                        Console.WriteLine("succesfully parsed sudoku");
+                        Console.WriteLine("succesfully parsed sudoku\n");
+
+                        // create sudoku object
+                        Sudoku sudoku = new Sudoku(numbers);
+
+                        sudoku.PrintSudoku();
                     }
                 }
             }
