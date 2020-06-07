@@ -129,7 +129,38 @@ namespace Sudoku_Solver
             }
 
             // check if sudoku is solved
-            return _emptyCells.Count == 0 && IsSudokuValid();
+            if (_emptyCells.Count == 0)
+            {
+                return IsSudokuValid();
+            }
+            else
+            {
+                if (!IsSudokuValid())
+                {
+                    return false;
+                }
+
+                // get the empty cell with the least remaining possible values
+                SudokuCell cell = _emptyCells.OrderBy(c => c.PossibleValues.Count).First();
+
+                for (int i = 0; i < cell.PossibleValues.Count; i++)
+                {
+                    _values[cell.Row, cell.Column] = cell.PossibleValues[i];
+
+                    Sudoku sudoku = new Sudoku(_values);
+                    if (sudoku.Solve())
+                    {
+                        _values = sudoku._values;
+                        return true;
+                    }
+                    else
+                    {
+                        _values[cell.Row, cell.Column] = 0;
+                    }
+                }
+
+                return false;
+            }
         }
 
         /// <summary>
