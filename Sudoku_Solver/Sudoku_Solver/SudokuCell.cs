@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sudoku_Solver
@@ -27,6 +28,28 @@ namespace Sudoku_Solver
                     PossibleValues.Add(i);
                 }
             }
+        }
+
+        /// <summary>
+        /// remove a value from possible values, if one possible value is left this cells value is set
+        /// returns number of updated values
+        /// </summary>
+        /// <param name="value"></param>
+        public int RemoveFromPossibleValues(int value)
+        {
+            if (!PossibleValues.Contains(value))
+            {
+                return 0;
+            }
+
+            PossibleValues.Remove(value);
+
+            if (PossibleValues.Count == 1)
+            {
+                Value = PossibleValues.First();
+            }
+
+            return 1;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Sudoku_Solver
 {
@@ -35,6 +36,26 @@ namespace Sudoku_Solver
 
                         // create sudoku object
                         Sudoku sudoku = new Sudoku(numbers);
+
+                        sudoku.PrintSudoku();
+
+                        Console.WriteLine("solving sudoku...");
+
+                        Stopwatch stopwatch = new Stopwatch();
+                        stopwatch.Start();
+
+                        bool solved = sudoku.Solve();
+
+                        stopwatch.Stop();
+                        
+                        if (solved)
+                        {
+                            Console.WriteLine($"solution found in {stopwatch.ElapsedMilliseconds} milliseconds");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"no solution found in {stopwatch.ElapsedMilliseconds} milliseconds");
+                        }
 
                         sudoku.PrintSudoku();
                     }

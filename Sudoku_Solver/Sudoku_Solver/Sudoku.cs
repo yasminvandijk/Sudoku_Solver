@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sudoku_Solver
@@ -87,6 +88,83 @@ namespace Sudoku_Solver
             }
 
             Console.WriteLine();
+        }
+
+        public bool Solve()
+        {
+            // for each fixed cell, update possible values for empty cells in the same row, column or block
+            _fixedCells.ForEach(fixedCell =>
+            {
+                UpdatePossibleValues(fixedCell);
+            });
+
+            while (_emptyCells.Count > 0)
+            {
+                // move all cells that now have a value from the empty cells to the fixed cells
+                List<SudokuCell> newFixedCells = _emptyCells.Where(c => c.Value != 0).ToList();
+
+                int updates = 0;
+
+                newFixedCells.ForEach(cell =>
+                {
+                    updates += UpdatePossibleValues(cell);
+                    _fixedCells.Add(cell);
+                    _emptyCells.Remove(cell);
+                    _values[cell.Row, cell.Column] = cell.Value;
+                });
+
+                if (updates == 0)
+                {
+                    break;
+                }
+            }
+
+            // check if sudoku is solved
+            return _emptyCells.Count == 0 && IsSudokuValid();
+        }
+
+        /// <summary>
+        /// checks if values in rows, columns and blocks are unique (except for 0)
+        /// </summary>
+        /// <returns></returns>
+        private bool IsSudokuValid()
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                if (!IsListValid(_rows[i]) || !IsListValid(_columns[i]) || !IsListValid(_blocks[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///  checks if every value in the list is unique (except for 0)
+        /// </summary>
+        /// <returns></returns>
+        private bool IsListValid(List<SudokuCell> values)
+        {
+            List<int> nonZeroValues = values.Where(c => c.Value != 0).Select(c => c.Value).ToList();
+
+            return nonZeroValues.Count == nonZeroValues.Distinct().Count();
+        }
+
+        /// <summary>
+        /// removes the value from the given cell from possible values in cells in same row, column or block
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <returns></returns>
+        private int UpdatePossibleValues(SudokuCell cell)
+        {
+            int updates = 0;
+            
+            _rows[cell.Row].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
+            _columns[cell.Column].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
+            _blocks[cell.Block].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
+
+            return updates;
         }
     }
 }
