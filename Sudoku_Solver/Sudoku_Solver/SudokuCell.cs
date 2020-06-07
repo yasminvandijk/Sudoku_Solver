@@ -51,5 +51,24 @@ namespace Sudoku_Solver
 
             return 1;
         }
+
+        /// <summary>
+        /// set value for this cell
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public int SetValue(int value)
+        {
+            if (Value != 0 || !PossibleValues.Contains(value))
+            {
+                return 0;
+            }
+
+            Value = value;
+
+            PossibleValues = new List<int>() { value };
+
+            return 1;
+        }
     }
 }

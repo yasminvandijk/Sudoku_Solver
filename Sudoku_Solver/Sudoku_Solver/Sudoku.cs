@@ -105,6 +105,7 @@ namespace Sudoku_Solver
 
                 int updates = 0;
 
+                // eliminate possible values in empty cells                
                 newFixedCells.ForEach(cell =>
                 {
                     updates += UpdatePossibleValues(cell);
@@ -112,6 +113,14 @@ namespace Sudoku_Solver
                     _emptyCells.Remove(cell);
                     _values[cell.Row, cell.Column] = cell.Value;
                 });
+
+                // fill in missing values in rows, columns and blocks
+                for (int i = 0; i < 9; i++)
+                {
+                    updates += FillInMissingValues(_rows[i]);
+                    updates += FillInMissingValues(_columns[i]);
+                    updates += FillInMissingValues(_blocks[i]);
+                }
 
                 if (updates == 0)
                 {
@@ -144,9 +153,9 @@ namespace Sudoku_Solver
         ///  checks if every value in the list is unique (except for 0)
         /// </summary>
         /// <returns></returns>
-        private bool IsListValid(List<SudokuCell> values)
+        private bool IsListValid(List<SudokuCell> cells)
         {
-            List<int> nonZeroValues = values.Where(c => c.Value != 0).Select(c => c.Value).ToList();
+            List<int> nonZeroValues = cells.Where(c => c.Value != 0).Select(c => c.Value).ToList();
 
             return nonZeroValues.Count == nonZeroValues.Distinct().Count();
         }
@@ -163,6 +172,32 @@ namespace Sudoku_Solver
             _rows[cell.Row].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
             _columns[cell.Column].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
             _blocks[cell.Block].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
+
+            return updates;
+        }
+
+        /// <summary>
+        /// fill in missing values in a row, column or block if possible
+        /// </summary>
+        /// <param name="cells"></param>
+        /// <returns></returns>
+        private int FillInMissingValues(List<SudokuCell> cells)
+        {
+            int updates = 0;
+
+            List<int> missingValues = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+            cells.ForEach(c => missingValues.RemoveAll(v => v == c.Value));
+
+            missingValues.ForEach(v =>
+            {
+                List<SudokuCell> possibleCells = cells.Where(c => c.PossibleValues.Contains(v)).ToList();
+
+                if (possibleCells.Count() == 1)
+                {
+                    updates += possibleCells.First().SetValue(v);
+                }
+            });
 
             return updates;
         }
