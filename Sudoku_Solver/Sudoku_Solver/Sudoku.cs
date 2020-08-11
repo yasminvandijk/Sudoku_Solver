@@ -7,70 +7,11 @@ namespace Sudoku_Solver
 {
     class Sudoku
     {
-        private int[,] _values = new int[9, 9];
+        private readonly int[,] _values = new int[9, 9];
 
-        private List<SudokuCell>[] _rows = new List<SudokuCell>[9];
-        private List<SudokuCell>[] _columns = new List<SudokuCell>[9];
-        private List<SudokuCell>[] _blocks = new List<SudokuCell>[9];
-
-        private List<SudokuCell> _fixedCells = new List<SudokuCell>();
-        private List<SudokuCell> _emptyCells = new List<SudokuCell>();
-        
-        public Sudoku(int[,] values)
-        {
-            // check if given sudoku is not empty
-            if (values == null)
-            {
-                throw new Exception("can't initialize sudoku from empty array");
-            }
-
-            // check if given sudoku is valid
-            if (values.GetLength(0) != 9 || values.GetLength(1) != 9)
-            {
-                throw new Exception("sudoku dimensions should be 9 by 9");
-            }
-
-            // initialize lists for sudoku cells
-            for (int i = 0; i < 9; i++)
-            {
-                _rows[i] = new List<SudokuCell>();
-                _columns[i] = new List<SudokuCell>();
-                _blocks[i] = new List<SudokuCell>();
-            }
-
-            // store values
-            for (int x = 0; x < 9; x++)
-            {
-                for (int y = 0; y < 9; y++)
-                {
-                    int value = values[x, y];
-                    
-                    // check if value is valid
-                    if (value < 0 || value > 9)
-                    {
-                        throw new Exception($"invalid value: {value}");
-                    }
-                    
-                    _values[x, y] = value;
-
-                    SudokuCell cell = new SudokuCell(x, y, value);
-
-                    _rows[cell.Row].Add(cell);
-                    _columns[cell.Column].Add(cell);
-                    _blocks[cell.Block].Add(cell);
-
-                    if (value == 0)
-                    {
-                        _emptyCells.Add(cell);
-                    }
-                    else
-                    {
-                        _fixedCells.Add(cell);
-                    }
-                }
-            }
-        }
-
+        /// <summary>
+        /// prints sudoku to console
+        /// </summary>
         public void PrintSudoku()
         {
             for (int y = 0; y < 9; y++)
@@ -90,90 +31,61 @@ namespace Sudoku_Solver
             Console.WriteLine();
         }
 
-        public bool Solve()
+        /// <summary>
+        /// sets the sudoku's value at given row and column if row, column and value are valid
+        /// </summary>
+        /// <param name="row">value between 0 and 8</param>
+        /// <param name="column">value between 0 and 8</param>
+        /// <param name="value">value between 0 and 9</param>
+        public void SetValue(int row, int column, int value)
         {
-            // for each fixed cell, update possible values for empty cells in the same row, column or block
-            _fixedCells.ForEach(fixedCell =>
+            if (row < 0 || row > 8 || column < 0 || column > 8 || value < 0 || value > 9)
             {
-                UpdatePossibleValues(fixedCell);
-            });
-
-            while (_emptyCells.Count > 0)
-            {
-                // move all cells that now have a value from the empty cells to the fixed cells
-                List<SudokuCell> newFixedCells = _emptyCells.Where(c => c.Value != 0).ToList();
-
-                int updates = 0;
-
-                // eliminate possible values in empty cells                
-                newFixedCells.ForEach(cell =>
-                {
-                    updates += UpdatePossibleValues(cell);
-                    _fixedCells.Add(cell);
-                    _emptyCells.Remove(cell);
-                    _values[cell.Row, cell.Column] = cell.Value;
-                });
-
-                // fill in missing values in rows, columns and blocks
-                for (int i = 0; i < 9; i++)
-                {
-                    updates += FillInMissingValues(_rows[i]);
-                    updates += FillInMissingValues(_columns[i]);
-                    updates += FillInMissingValues(_blocks[i]);
-                }
-
-                if (updates == 0)
-                {
-                    break;
-                }
+                return;
             }
 
-            // check if sudoku is solved
-            if (_emptyCells.Count == 0)
-            {
-                return IsSudokuValid();
-            }
-            else
-            {
-                if (!IsSudokuValid())
-                {
-                    return false;
-                }
-
-                // get the empty cell with the least remaining possible values
-                SudokuCell cell = _emptyCells.OrderBy(c => c.PossibleValues.Count).First();
-
-                for (int i = 0; i < cell.PossibleValues.Count; i++)
-                {
-                    _values[cell.Row, cell.Column] = cell.PossibleValues[i];
-
-                    Sudoku sudoku = new Sudoku(_values);
-                    if (sudoku.Solve())
-                    {
-                        _values = sudoku._values;
-                        return true;
-                    }
-                    else
-                    {
-                        _values[cell.Row, cell.Column] = 0;
-                    }
-                }
-
-                return false;
-            }
+            _values[row, column] = value;
         }
 
         /// <summary>
-        /// checks if values in rows, columns and blocks are unique (except for 0)
+        /// gets value from sudoku if given row and column are valid, otherwise 0
+        /// </summary>
+        /// <param name="row">value between 0 and 8</param>
+        /// <param name="column">value between 0 and 8</param>
+        /// <returns></returns>
+        public int GetValue(int row, int column)
+        {
+            if (row < 0 || row > 8 || column < 0 || column > 8)
+            {
+                return 0;
+            }
+
+            return _values[row, column];
+        }
+
+        /// <summary>
+        /// for each row, checks if all non-zero values are unique
         /// </summary>
         /// <returns></returns>
-        private bool IsSudokuValid()
+        private bool AreRowsValid()
         {
-            for (int i = 0; i < 9; i++)
+            for (int y = 0; y < 9; y++)
             {
-                if (!IsListValid(_rows[i]) || !IsListValid(_columns[i]) || !IsListValid(_blocks[i]))
+                bool[] values = new bool[9];
+
+                for (int x = 0; x < 9; x++)
                 {
-                    return false;
+                    int value = GetValue(x, y);
+
+                    if (value >= 1 && value <= 9)
+                    {
+                        if (values[value - 1])
+                        {
+                            return false;
+                        }
+
+                        values[value - 1] = true;
+                    }
                 }
             }
 
@@ -181,28 +93,92 @@ namespace Sudoku_Solver
         }
 
         /// <summary>
-        ///  checks if every value in the list is unique (except for 0)
+        /// for each column, checks if all non-zero values are unique
         /// </summary>
         /// <returns></returns>
-        private bool IsListValid(List<SudokuCell> cells)
+        private bool AreColumnsValid()
         {
-            List<int> nonZeroValues = cells.Where(c => c.Value != 0).Select(c => c.Value).ToList();
+            for (int x = 0; x < 9; x++)
+            {
+                bool[] values = new bool[9];
 
-            return nonZeroValues.Count == nonZeroValues.Distinct().Count();
+                for (int y = 0; y < 9; y++)
+                {
+                    int value = GetValue(x, y);
+
+                    if (value >= 1 && value <= 9)
+                    {
+                        if (values[value - 1])
+                        {
+                            return false;
+                        }
+
+                        values[value - 1] = true;
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
-        /// removes the value from the given cell from possible values in cells in same row, column or block
+        /// for each block, checks if all non-zero values are unique
         /// </summary>
-        /// <param name="cell"></param>
         /// <returns></returns>
-        private int UpdatePossibleValues(SudokuCell cell)
+        private bool AreBlocksValid()
+        {
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    bool[] values = new bool[9];
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        for (int j = 0; j < 3; j++)
+                        {
+                            int value = GetValue(x * 3 + i, y * 3 + j);
+
+                            if (value >= 1 && value <= 9)
+                            {
+                                if (values[value - 1])
+                                {
+                                    return false;
+                                }
+
+                                values[value - 1] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// checks if all rows, columns and blocks are valid
+        /// </summary>
+        /// <returns></returns>
+        private bool IsSudokuValid()
+        {
+            return AreRowsValid() && AreColumnsValid() && AreBlocksValid();
+        }
+
+        /// <summary>
+        /// removes the given value from possible values from all given cells
+        /// </summary>
+        /// <param name="cells"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private int UpdatePossibleValues(List<SudokuCell> cells, int value)
         {
             int updates = 0;
-            
-            _rows[cell.Row].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
-            _columns[cell.Column].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
-            _blocks[cell.Block].ForEach(c => updates += c.RemoveFromPossibleValues(cell.Value));
+
+            cells.ForEach(cell =>
+            {
+                updates += cell.RemoveFromPossibleValues(value);
+            });
 
             return updates;
         }
@@ -216,21 +192,171 @@ namespace Sudoku_Solver
         {
             int updates = 0;
 
-            List<int> missingValues = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            // find all missing values
+            List<int> missingValues = Enumerable.Range(1, 9).ToList();
 
-            cells.ForEach(c => missingValues.RemoveAll(v => v == c.Value));
-
-            missingValues.ForEach(v =>
+            cells.ForEach(cell =>
             {
-                List<SudokuCell> possibleCells = cells.Where(c => c.PossibleValues.Contains(v)).ToList();
+                missingValues.Remove(cell.Value);
+            });
 
-                if (possibleCells.Count() == 1)
+            // find possible cells for missing values
+            missingValues.ForEach(missingValue =>
+            {
+                List<SudokuCell> possibleCells = cells.Where(c => c.PossibleValues.Contains(missingValue)).ToList();
+
+                if (possibleCells.Count == 1)
                 {
-                    updates += possibleCells.First().SetValue(v);
+                    possibleCells.First().SetValue(missingValue);
+                    SetValue(possibleCells.First().Row, possibleCells.First().Column, possibleCells.First().Value);
+                    //PrintSudoku();
+
+                    updates++;
                 }
             });
 
             return updates;
+        }
+
+        /// <summary>
+        /// attempts to solve the sudoku
+        /// </summary>
+        /// <returns>true if successful, false otherwise</returns>
+        public bool Solve()
+        {
+            if (!IsSudokuValid())
+            {
+                return false;
+            }
+            
+            List<SudokuCell>[] rows = new List<SudokuCell>[9];
+            List<SudokuCell>[] columns = new List<SudokuCell>[9];
+            List<SudokuCell>[] blocks = new List<SudokuCell>[9];
+
+            List<SudokuCell> fixedCells = new List<SudokuCell>();
+            List<SudokuCell> emptyCells = new List<SudokuCell>();
+
+            for(int i = 0; i < 9; i++)
+            {
+                rows[i] = new List<SudokuCell>();
+                columns[i] = new List<SudokuCell>();
+                blocks[i] = new List<SudokuCell>();
+            }
+
+            // add cells to rows, columns, blocks and to empty or fixed cells
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    SudokuCell cell = new SudokuCell(i, j, GetValue(i, j));
+
+                    rows[cell.Row].Add(cell);
+                    columns[cell.Column].Add(cell);
+                    blocks[cell.Block].Add(cell);
+
+                    if (cell.Value == 0)
+                    {
+                        emptyCells.Add(cell);
+                    }
+                    else
+                    {
+                        fixedCells.Add(cell);
+                    }
+                }
+            }
+
+            // eliminate fixed cell values from possible values in cells on same rows, columns or blocks
+            fixedCells.ForEach(fixedCell =>
+            {
+                UpdatePossibleValues(rows[fixedCell.Row], fixedCell.Value);
+                UpdatePossibleValues(columns[fixedCell.Column], fixedCell.Value);
+                UpdatePossibleValues(blocks[fixedCell.Block], fixedCell.Value);
+            });
+
+            // keep updating cells untill sudoku is solved or no more updates are possible
+            while (emptyCells.Count > 0)
+            {
+                int updates = 0;
+
+                // get all cells from empty cells that now have a value
+                emptyCells.ForEach(cell =>
+                {
+                    if (cell.Value != 0)
+                    {
+                        fixedCells.Add(cell);
+                        SetValue(cell.Row, cell.Column, cell.Value);
+                        updates += UpdatePossibleValues(rows[cell.Row], cell.Value);
+                        updates += UpdatePossibleValues(columns[cell.Column], cell.Value);
+                        updates += UpdatePossibleValues(blocks[cell.Block], cell.Value);
+                    }
+                });
+                emptyCells.RemoveAll(c => fixedCells.Contains(c));
+
+                // fill in missing values in rows, columns and blocks
+                for (int i = 0; i < 9; i++)
+                {
+                    updates += FillInMissingValues(rows[i]);
+                    updates += FillInMissingValues(columns[i]);
+                    updates += FillInMissingValues(blocks[i]);
+                }
+
+                if (updates == 0)
+                {
+                    break;
+                }
+            }
+
+            // check if sudoku is solved
+            if (emptyCells.Count == 0)
+            {
+                return IsSudokuValid();
+            }
+            else
+            {
+                // find the empty cell with the least number of possible values
+                emptyCells.ForEach(cell =>
+                {
+                    if (cell.Value != 0)
+                    {
+                        fixedCells.Add(cell);
+                        SetValue(cell.Row, cell.Column, cell.Value);
+                    }
+                });
+                emptyCells.RemoveAll(c => fixedCells.Contains(c));
+                emptyCells.Sort((a, b) => a.PossibleValues.Count - b.PossibleValues.Count);
+
+                SudokuCell cell = emptyCells.First();
+
+                for (int i = 1; i <= 9; i++)
+                {
+                    if (cell.PossibleValues.Contains(i))
+                    {
+                        Sudoku sudoku = new Sudoku();
+                        for (int x = 0; x < 9; x++)
+                        {
+                            for (int y = 0; y < 9; y++)
+                            {
+                                sudoku.SetValue(x, y, GetValue(x, y));
+                            }
+                        }
+                        sudoku.SetValue(cell.Row, cell.Column, i);
+
+                        if (sudoku.Solve())
+                        {
+                            for (int x = 0; x < 9; x++)
+                            {
+                                for (int y = 0; y < 9; y++)
+                                {
+                                    SetValue(x, y, sudoku.GetValue(x, y));
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
         }
     }
 }

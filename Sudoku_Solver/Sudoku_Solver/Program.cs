@@ -34,8 +34,15 @@ namespace Sudoku_Solver
                     {
                         Console.WriteLine("succesfully parsed sudoku\n");
 
-                        // create sudoku object
-                        Sudoku sudoku = new Sudoku(numbers);
+                        Sudoku sudoku = new Sudoku();
+
+                        for (int x = 0; x < 9; x++)
+                        {
+                            for (int y = 0; y < 9; y++)
+                            {
+                                sudoku.SetValue(x, y, numbers[x, y]);
+                            }
+                        }
 
                         sudoku.PrintSudoku();
 
