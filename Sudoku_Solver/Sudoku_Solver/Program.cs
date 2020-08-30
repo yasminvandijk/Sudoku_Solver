@@ -7,6 +7,8 @@ namespace Sudoku_Solver
     {
         static void Main(string[] args)
         {
+            Console.Title = "Sudoku Solver";
+            
             while (true) {
                 // get filepath from input and read it's contents
                 Console.WriteLine("Enter path to text file:");
