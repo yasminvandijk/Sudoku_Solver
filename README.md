@@ -1,5 +1,7 @@
 # Sudoku_Solver
 
+C# console application
+
 ## how to use
 
 - enter a filepath to a .txt file containing the sudoku you want to solve
